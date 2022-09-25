@@ -36,7 +36,8 @@ func main() {
 	http.HandleFunc("/api/stats", ShowStats)
 	http.Handle("/r/", &Redirect{stats})
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	logging("Server on port %d ...", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
 func Shortener(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +65,8 @@ func Shortener(w http.ResponseWriter, r *http.Request) {
 	urlShortened := fmt.Sprintf("%s/r/%s", baseUrl, url.Id)
 
 	answerWith(w, status, Headers{"Location": urlShortened, "Link": fmt.Sprintf("<%s/api/stats/%s>; rel=\"stats\"", baseUrl, url.Id)})
+
+	logging("URL %s shortened with sucess for %s", url.Destination, urlShortened)
 }
 
 func (red *Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +117,7 @@ func answerWithJSON(
 func registerStatistics(ids <-chan string) {
 	for id := range ids {
 		url.RegisterClick(id)
-		fmt.Printf("Click registered successfully for %s", id)
+		logging("Click registered successfully for %s", id)
 	}
 }
 
@@ -133,4 +136,8 @@ func extractUrl(r *http.Request) string {
 	url := make([]byte, r.ContentLength, r.ContentLength)
 	r.Body.Read(url)
 	return string(url)
+}
+
+func logging(format string, values ...interface{}) {
+	log.Printf(fmt.Sprintf("%s\n", format), values...)
 }
