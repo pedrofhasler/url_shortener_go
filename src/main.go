@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,9 +12,9 @@ import (
 )
 
 var (
-	port    int
+	port    *int
+	logOn   *bool
 	baseUrl string
-	stats   chan string
 )
 
 type Headers map[string]string
@@ -23,12 +24,15 @@ type Redirect struct {
 }
 
 func init() {
-	port = 8888
-	baseUrl = fmt.Sprintf("http://localhost:%d", port)
+	port = flag.Int("p", 8888, "port")
+	logOn = flag.Bool("1", true, "log turned on/off")
+
+	flag.Parse()
+	baseUrl = fmt.Sprintf("http://localhost:%d", *port)
 }
 
 func main() {
-	stats = make(chan string)
+	stats := make(chan string)
 	defer close(stats)
 	go registerStatistics(stats)
 
@@ -139,5 +143,7 @@ func extractUrl(r *http.Request) string {
 }
 
 func logging(format string, values ...interface{}) {
-	log.Printf(fmt.Sprintf("%s\n", format), values...)
+	if *logOn {
+		log.Printf(fmt.Sprintf("%s\n", format), values...)
+	}
 }
