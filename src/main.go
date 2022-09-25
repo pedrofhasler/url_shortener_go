@@ -18,6 +18,10 @@ var (
 
 type Headers map[string]string
 
+type Redirect struct {
+	stats chan string
+}
+
 func init() {
 	port = 8888
 	baseUrl = fmt.Sprintf("http://localhost:%d", port)
@@ -30,7 +34,7 @@ func main() {
 
 	http.HandleFunc("/api/shortener", Shortener)
 	http.HandleFunc("/api/stats", ShowStats)
-	http.HandleFunc("/r/", Redirect)
+	http.Handle("/r/", &Redirect{stats})
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
@@ -62,13 +66,13 @@ func Shortener(w http.ResponseWriter, r *http.Request) {
 	answerWith(w, status, Headers{"Location": urlShortened, "Link": fmt.Sprintf("<%s/api/stats/%s>; rel=\"stats\"", baseUrl, url.Id)})
 }
 
-func Redirect(w http.ResponseWriter, r *http.Request) {
+func (red *Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := strings.Split(r.URL.Path, "/")
 	id := path[len(path)-1]
 
 	if url := url.LookUp(id); url != nil {
 		http.Redirect(w, r, url.Destination, http.StatusMovedPermanently)
-		stats <- id
+		red.stats <- id
 	} else {
 		http.NotFound(w, r)
 	}
