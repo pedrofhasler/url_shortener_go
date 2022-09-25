@@ -1,0 +1,32 @@
+package url
+
+type mock_database struct {
+	urls map[string]*Url
+}
+
+func NewMockDatabase() *mock_database {
+	return &mock_database{make(map[string]*Url)}
+}
+
+func (r *mock_database) LookForUrl(url string) *Url {
+	for _, u := range r.urls {
+		if u.Destination == url {
+			return u
+		}
+	}
+	return nil
+}
+
+func (r *mock_database) LookForId(id string) *Url {
+	return r.urls[id]
+}
+
+func (r *mock_database) IdMatch(id string) bool {
+	_, match := r.urls[id]
+	return match
+}
+
+func (r *mock_database) Save(url Url) error {
+	r.urls[url.Id] = &url
+	return nil
+}
