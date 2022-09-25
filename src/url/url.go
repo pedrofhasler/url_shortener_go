@@ -26,12 +26,17 @@ type IUrl interface {
 	LookForId(id string) *Url
 	LookForUrl(url string) *Url
 	Save(url Url) error
+	RegisterClick(id string)
 }
 
 var repo IUrl
 
 func RepositoryConfiguration(r IUrl) {
 	repo = r
+}
+
+func RegisterClick(id string) {
+	repo.RegisterClick(id)
 }
 
 func LookOrCreateNewUrl(destination string) (

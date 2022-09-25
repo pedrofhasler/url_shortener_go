@@ -1,11 +1,15 @@
 package url
 
 type mock_database struct {
-	urls map[string]*Url
+	urls   map[string]*Url
+	clicks map[string]int
 }
 
 func NewMockDatabase() *mock_database {
-	return &mock_database{make(map[string]*Url)}
+	return &mock_database{
+		make(map[string]*Url),
+		make(map[string]int),
+	}
 }
 
 func (r *mock_database) LookForUrl(url string) *Url {
