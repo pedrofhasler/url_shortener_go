@@ -16,9 +16,14 @@ func init() {
 }
 
 type Url struct {
-	Id          string
-	CreatedAt   time.Time
-	Destination string
+	Id          string    `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Destination string    `json:"destination"`
+}
+
+type Stats struct {
+	Url    *Url `json:"url"`
+	Clicks int  `json:"clicks"`
 }
 
 type IUrl interface {
@@ -27,6 +32,7 @@ type IUrl interface {
 	LookForUrl(url string) *Url
 	Save(url Url) error
 	RegisterClick(id string)
+	LookForClicks(id string) int
 }
 
 var repo IUrl
@@ -75,4 +81,9 @@ func makeId() string {
 
 func LookUp(id string) *Url {
 	return repo.LookForId(id)
+}
+
+func (u *Url) Stats() *Stats {
+	clicks := repo.LookForClicks(u.Id)
+	return &Stats{u, clicks}
 }

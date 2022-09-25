@@ -34,3 +34,7 @@ func (r *mock_database) Save(url Url) error {
 	r.urls[url.Id] = &url
 	return nil
 }
+
+func (r *mock_database) LookForClicks(id string) int {
+	return r.clicks[id]
+}

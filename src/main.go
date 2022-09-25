@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,6 +29,7 @@ func main() {
 	go registerStatistics(stats)
 
 	http.HandleFunc("/api/shortener", Shortener)
+	http.HandleFunc("/api/stats", ShowStats)
 	http.HandleFunc("/r/", Redirect)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
@@ -57,7 +59,7 @@ func Shortener(w http.ResponseWriter, r *http.Request) {
 
 	urlShortened := fmt.Sprintf("%s/r/%s", baseUrl, url.Id)
 
-	answerWith(w, status, Headers{"location": urlShortened})
+	answerWith(w, status, Headers{"Location": urlShortened, "Link": fmt.Sprintf("<%s/api/stats/%s>; rel=\"stats\"", baseUrl, url.Id)})
 }
 
 func Redirect(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +72,34 @@ func Redirect(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.NotFound(w, r)
 	}
+}
+
+func ShowStats(w http.ResponseWriter, r *http.Request) {
+	path := strings.Split(r.URL.Path, "/")
+	id := path[len(path)-1]
+
+	if url := url.LookUp(id); url != nil {
+		json, err := json.Marshal(url.Stats())
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		answerWithJSON(w, string(json))
+	} else {
+		http.NotFound(w, r)
+	}
+}
+
+func answerWithJSON(
+	w http.ResponseWriter,
+	answer string,
+) {
+	answerWith(w, http.StatusOK, Headers{
+		"Content-Type": "application/json",
+	})
+	fmt.Fprint(w, answer)
 }
 
 func registerStatistics(ids <-chan string) {
